@@ -11,7 +11,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"regexp"
+	"runtime"
 	"unsafe"
 )
 
@@ -28,6 +31,30 @@ var (
 	ErrOddLengthHexString   = errors.New("odd length hex string")
 	ErrInvalidHexCharacters = errors.New("invalid hex characters")
 )
+
+func init() {
+	// 根据系统确定库文件名
+	var libPath string
+	switch runtime.GOOS {
+	case "windows":
+		libPath = "bin/aes_256_gcm_siv.dll"
+	case "darwin":
+		libPath = "bin/libaes_256_gcm_siv.dylib"
+	default:
+		libPath = "bin/libaes_256_gcm_siv.so"
+	}
+
+	// 如果库不存在，则自动编译 Rust
+	if _, err := os.Stat(libPath); os.IsNotExist(err) {
+		// Rust 源码目录相对路径
+		rustDir := "../" // 从 aes_256_gcm_siv_ffi 到 src 的上级目录
+		cmd := exec.Command("cargo", "build", "--release", "--target-dir", "aes_256_gcm_siv_ffi/bin")
+		cmd.Dir = rustDir
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		_ = cmd.Run()
+	}
+}
 
 // isValidHex 验证字符串是否为有效的十六进制格式
 func isValidHex(s string) (bool, error) {

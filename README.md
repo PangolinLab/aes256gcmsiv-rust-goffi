@@ -32,8 +32,8 @@ Decrypt(key, ciphertextWithNonce []byte) ([]byte, error)
 import "github.com/PangolinLab/aes256gcmsiv-rust-goffi"
 
 // 加密
-ciphertext, err := tools.Encrypt(key, nonce, plaintext) 
+ciphertext, err := aes_256_gcm_siv_ffi.Encrypt(key, nonce, plaintext) 
 
 // 解密
-plaintext, err := tools.Decrypt(key, ciphertextWithNonce)
+plaintext, err := aes_256_gcm_siv_ffi.Decrypt(key, ciphertextWithNonce)
 ```
