@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"unsafe"
@@ -33,52 +34,52 @@ var (
 )
 
 func init() {
-    // 动态库最终路径
-    var libFile string
-    switch runtime.GOOS {
-    case "windows":
-        libFile = "bin/aes_256_gcm_siv.dll"
-    case "darwin":
-        libFile = "bin/libaes_256_gcm_siv.dylib"
-    default:
-        libFile = "bin/libaes_256_gcm_siv.so"
-    }
+	// 动态库最终路径
+	var libFile string
+	switch runtime.GOOS {
+	case "windows":
+		libFile = "bin/aes_256_gcm_siv.dll"
+	case "darwin":
+		libFile = "bin/libaes_256_gcm_siv.dylib"
+	default:
+		libFile = "bin/libaes_256_gcm_siv.so"
+	}
 
-    // 如果库不存在，则编译 Rust 并复制到 bin/
-    if _, err := os.Stat(libFile); os.IsNotExist(err) {
-        // Rust 源码目录（Cargo.toml 所在目录）
-        rustDir := "../" // 根据你的目录结构调整
-        buildCmd := exec.Command("cargo", "build", "--release")
-        buildCmd.Dir = rustDir
-        buildCmd.Stdout = os.Stdout
-        buildCmd.Stderr = os.Stderr
-        if err := buildCmd.Run(); err != nil {
-            panic("Failed to build Rust library: " + err.Error())
-        }
+	// 如果库不存在，则编译 Rust 并复制到 bin/
+	if _, err := os.Stat(libFile); os.IsNotExist(err) {
+		// Rust 源码目录（Cargo.toml 所在目录）
+		rustDir := "../" // 根据你的目录结构调整
+		buildCmd := exec.Command("cargo", "build", "--release")
+		buildCmd.Dir = rustDir
+		buildCmd.Stdout = os.Stdout
+		buildCmd.Stderr = os.Stderr
+		if err := buildCmd.Run(); err != nil {
+			panic("Failed to build Rust library: " + err.Error())
+		}
 
-        // 源文件路径（默认 target/release/）
-        var srcLib string
-        switch runtime.GOOS {
-        case "windows":
-            srcLib = filepath.Join(rustDir, "target", "release", "aes_256_gcm_siv.dll")
-        case "darwin":
-            srcLib = filepath.Join(rustDir, "target", "release", "libaes_256_gcm_siv.dylib")
-        default:
-            srcLib = filepath.Join(rustDir, "target", "release", "libaes_256_gcm_siv.so")
-        }
+		// 源文件路径（默认 target/release/）
+		var srcLib string
+		switch runtime.GOOS {
+		case "windows":
+			srcLib = filepath.Join(rustDir, "target", "release", "aes_256_gcm_siv.dll")
+		case "darwin":
+			srcLib = filepath.Join(rustDir, "target", "release", "libaes_256_gcm_siv.dylib")
+		default:
+			srcLib = filepath.Join(rustDir, "target", "release", "libaes_256_gcm_siv.so")
+		}
 
-        // 确保 bin 目录存在
-        _ = os.MkdirAll("bin", 0755)
+		// 确保 bin 目录存在
+		_ = os.MkdirAll("bin", 0755)
 
-        // 复制库到 bin/
-        input, err := os.ReadFile(srcLib)
-        if err != nil {
-            panic("Failed to read Rust library: " + err.Error())
-        }
-        if err := os.WriteFile(libFile, input, 0644); err != nil {
-            panic("Failed to write library to bin/: " + err.Error())
-        }
-    }
+		// 复制库到 bin/
+		input, err := os.ReadFile(srcLib)
+		if err != nil {
+			panic("Failed to read Rust library: " + err.Error())
+		}
+		if err := os.WriteFile(libFile, input, 0644); err != nil {
+			panic("Failed to write library to bin/: " + err.Error())
+		}
+	}
 }
 
 // isValidHex 验证字符串是否为有效的十六进制格式
